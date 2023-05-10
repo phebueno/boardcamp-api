@@ -17,7 +17,7 @@ export async function postGame(req, res) {
         VALUES ($1, $2, $3, $4);`,
       [name, image, stockTotal, pricePerDay]
     );
-    res.send("OK");
+    res.sendStatus(201);
   } catch (err) {
     res.status(500).send(err.message);
   }
