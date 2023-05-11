@@ -12,6 +12,8 @@ export async function getGames(req, res) {
 export async function postGame(req, res) {
   const { name, image, stockTotal, pricePerDay } = req.body;
   try {
+    const checkGame = await db.query(`SELECT * FROM games WHERE name=$1;`,[name]);
+    if(checkGame.rowCount) return res.sendStatus(409); //conflito
     const newGame = await db.query(
       `INSERT INTO games ("name","image","stockTotal", "pricePerDay") 
         VALUES ($1, $2, $3, $4);`,

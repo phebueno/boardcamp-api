@@ -12,6 +12,8 @@ export async function getCustomers(req, res) {
 export async function postCustomer(req, res) {
   const { name, phone, cpf, birthday } = req.body;
   try {
+    const checkCustomers = await db.query(`SELECT * FROM customers WHERE cpf=$1;`,[cpf]);
+    if(checkCustomers.rowCount) return res.sendStatus(409); //conflito
     const newCustomer = await db.query(
       `INSERT INTO customers (name, phone, cpf, birthday)
       VALUES ($1,$2,$3,$4)`,
@@ -29,6 +31,7 @@ export async function getCustomerById(req, res) {
     const customer = await db.query(`SELECT * FROM customers WHERE id=$1;`, [
       id,
     ]);
+    if(!customer.rowCount) return res.sendStatus(404); //not found
     res.send(customer.rows[0]);
   } catch (err) {
     res.status(500).send(err.message);
@@ -39,6 +42,10 @@ export async function updateCustomerById(req, res) {
   const { id } = req.params;
   const { name, phone, cpf, birthday } = req.body;
   try {
+    const checkCustomers = await db.query(`SELECT * FROM customers WHERE cpf=$1;`,[cpf]);
+    //Se char CPF novo e for de outro usuário, gera conflito
+    if(checkCustomers.rowCount && checkCustomers.rows[0].id!==Number(id)) return res.sendStatus(409); //conflito
+    
     const updateCustomer = await db.query(
       `UPDATE customers
         SET name=$2,phone=$3,cpf=$4,birthday=$5
