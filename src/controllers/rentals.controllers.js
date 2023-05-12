@@ -3,7 +3,22 @@ import dayjs from "dayjs";
 
 export async function getRentals(req, res) {
   try {
-    res.send("alugueis recebidos!");
+    const rentals = await db.query(`
+    SELECT customers.name AS "customerName", games.name AS "gameName", rentals.* FROM rentals
+      JOIN customers
+        ON customers.id=rentals."customerId"
+      JOIN games
+        ON games.id=rentals."gameId";`);
+
+    const rentalsObj = rentals.rows.map(
+      ({ customerName, gameName, ...rental }) => ({
+        ...rental,
+        customer: { id: rental.customerId, name: customerName },
+        game: { id: rental.gameId, name: gameName },
+      })
+    );
+
+    res.send(rentalsObj);
   } catch (err) {
     res.status(500).send(err.message);
   }
@@ -14,7 +29,8 @@ export async function postRental(req, res) {
   const rentDate = dayjs().format("YYYY-MM-DD");
   try {
     //só vai atualizar se encontrar os IDS de games e customers nas tabelas
-    const rent = await db.query(`
+    const rent = await db.query(
+      `
     INSERT INTO rentals ("customerId","gameId","rentDate", "daysRented","returnDate","originalPrice","delayFee")
       SELECT 
         $1 AS customerId,
@@ -29,9 +45,10 @@ export async function postRental(req, res) {
               AND customers.id=$1 
               AND games."stockTotal">(SELECT COUNT(*) FROM rentals WHERE "gameId"=$2);
       
-    `,[customerId,gameId,rentDate,daysRented]
+    `,
+      [customerId, gameId, rentDate, daysRented]
     );
-    if(!rent.rowCount) return res.sendStatus(400); //não existe o ID
+    if (!rent.rowCount) return res.sendStatus(400); //não existe o ID
     res.sendStatus(201);
   } catch (err) {
     res.status(500).send(err.message);
