@@ -57,7 +57,7 @@ export async function postRental(req, res) {
 
 export async function finishRental(req, res) {
   const { id } = req.params;
-  const returnDate = dayjs('2023-05-18').format("YYYY-MM-DD");
+  const returnDate = dayjs('2023-05-16').format("YYYY-MM-DD");
   try {
     const finishedRental = await db.query(
       `
@@ -72,6 +72,7 @@ export async function finishRental(req, res) {
     `,
       [id, returnDate]
     );
+    //fórmula que funciona: (($2 - "rentDate")-"daysRented")*"originalPrice"/3
     if (!finishedRental.rowCount) {
       /*
       Ou não tem o ID, ou já havia sido finalizado. Esse trecho só roda em caso de erros
