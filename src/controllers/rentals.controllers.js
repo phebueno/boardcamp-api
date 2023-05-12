@@ -65,7 +65,7 @@ export async function finishRental(req, res) {
     SET "returnDate"=$2,
         "delayFee" = CASE
                         WHEN ($2 - "rentDate") > "daysRented"
-                        THEN (($2 - "rentDate")-"daysRented"-1)*"originalPrice"
+                        THEN (($2 - "rentDate")-"daysRented")*"originalPrice"/3
                         ELSE 0
                      END
       WHERE id=$1 AND "returnDate" IS NULL
