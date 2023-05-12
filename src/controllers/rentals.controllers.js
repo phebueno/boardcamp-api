@@ -57,7 +57,7 @@ export async function postRental(req, res) {
 
 export async function finishRental(req, res) {
   const { id } = req.params;
-  const returnDate = dayjs().format("YYYY-MM-DD");
+  const returnDate = dayjs('2023-05-18').format("YYYY-MM-DD");
   try {
     const finishedRental = await db.query(
       `
@@ -65,7 +65,7 @@ export async function finishRental(req, res) {
     SET "returnDate"=$2,
         "delayFee" = CASE
                         WHEN ($2 - "rentDate") > "daysRented"
-                        THEN (($2 - "rentDate")-"daysRented")*"originalPrice"/3
+                        THEN (($2 - "rentDate")-"daysRented")*"originalPrice"/"daysRented"
                         ELSE 0
                      END
       WHERE id=$1 AND "returnDate" IS NULL
