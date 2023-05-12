@@ -57,7 +57,7 @@ export async function postRental(req, res) {
 
 export async function finishRental(req, res) {
   const { id } = req.params;
-  const returnDate = dayjs('2023-05-16').format("YYYY-MM-DD");
+  const returnDate = dayjs().format("YYYY-MM-DD");
   try {
     const finishedRental = await db.query(
       `
