@@ -56,11 +56,11 @@ export async function postRental(req, res) {
 }
 
 export async function finishRental(req, res) {
-  const {id} = req.params;
+  const { id } = req.params;
   const returnDate = dayjs().format("YYYY-MM-DD");
   try {
     const finishedRental = await db.query(
-    `
+      `
     UPDATE rentals 
     SET "returnDate"=$2,
         "delayFee" = CASE
@@ -69,13 +69,22 @@ export async function finishRental(req, res) {
                         ELSE 0
                      END
       WHERE id=$1 AND "returnDate" IS NULL
-    `,[id,returnDate]);
-  if(!finishedRental.rowCount) {
-    //Ou não tem o ID, ou já havia sido finalizado
-    const checkIfAlreadyFinished = await db.query(`SELECT * FROM rentals WHERE id=$1`,[id]);
-    if(checkIfAlreadyFinished.rows[0]) return res.sendStatus(400);//aluguel finalizado anteriormente
-    else return res.sendStatus(404);//id não encontrado
-   } 
+    `,
+      [id, returnDate]
+    );
+    if (!finishedRental.rowCount) {
+      /*
+      Ou não tem o ID, ou já havia sido finalizado. Esse trecho só roda em caso de erros
+      (foi feito pela necessidade de diferenciar os erros)      
+      */
+      const checkIfAlreadyFinished = await db.query(
+        `SELECT * FROM rentals WHERE id=$1`,
+        [id]
+      );
+      if (checkIfAlreadyFinished.rows[0])
+        return res.sendStatus(400); //aluguel finalizado anteriormente
+      else return res.sendStatus(404); //id não encontrado
+    }
     res.sendStatus(200);
   } catch (err) {
     res.status(500).send(err.message);
@@ -83,8 +92,20 @@ export async function finishRental(req, res) {
 }
 
 export async function deleteRentalById(req, res) {
-  const {id} = req.params;
+  const { id } = req.params;
   try {
+    const deletedRental = await db.query(`DELETE FROM rentals WHERE id=$1 AND "returnDate" IS NOT NULL`,
+      [id],
+    );
+    if (!deletedRental.rowCount) {
+      const checkIfAlreadyFinished = await db.query(
+        `SELECT * FROM rentals WHERE id=$1`,
+        [id]
+      );
+      if (checkIfAlreadyFinished.rows[0])
+        return res.sendStatus(400); //aluguel deve ser finalizado antes de deletado
+      else return res.sendStatus(404); //id não encontrado
+    }
     res.send(`aluguel de numero ${id} deletado!`);
   } catch (err) {
     res.status(500).send(err.message);
