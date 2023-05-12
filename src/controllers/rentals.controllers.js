@@ -55,17 +55,37 @@ export async function postRental(req, res) {
   }
 }
 
-export async function endRental(req, res) {
+export async function finishRental(req, res) {
+  const {id} = req.params;
+  const returnDate = dayjs().format("YYYY-MM-DD");
   try {
-    res.send("aluguel finalizado!");
+    const finishedRental = await db.query(
+    `
+    UPDATE rentals 
+    SET "returnDate"=$2,
+        "delayFee" = CASE
+                        WHEN ($2 - "rentDate") > "daysRented"
+                        THEN (($2 - "rentDate")-"daysRented")*"originalPrice"
+                        ELSE 0
+                     END
+      WHERE id=$1 AND "returnDate" IS NULL
+    `,[id,returnDate]);
+  if(!finishedRental.rowCount) {
+    //Ou não tem o ID, ou já havia sido finalizado
+    const checkIfAlreadyFinished = await db.query(`SELECT * FROM rentals WHERE id=$1`,[id]);
+    if(checkIfAlreadyFinished.rows[0]) return res.sendStatus(400);//aluguel finalizado anteriormente
+    else return res.sendStatus(404);//id não encontrado
+   } 
+    res.sendStatus(200);
   } catch (err) {
     res.status(500).send(err.message);
   }
 }
 
 export async function deleteRentalById(req, res) {
+  const {id} = req.params;
   try {
-    res.send("aluguel deletado!");
+    res.send(`aluguel de numero ${id} deletado!`);
   } catch (err) {
     res.status(500).send(err.message);
   }
