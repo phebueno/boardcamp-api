@@ -2,7 +2,7 @@ import { db } from "../database/database.connection.js";
 
 export async function getCustomers(req, res) {
   try {
-    const customers = await db.query(`SELECT * FROM customers;`);
+    const customers = await db.query(`SELECT customers.*, TO_CHAR(birthday, 'YYYY-MM-DD') as birthday FROM customers;`);
     res.send(customers.rows);
   } catch (err) {
     res.status(500).send(err.message);
@@ -28,7 +28,7 @@ export async function postCustomer(req, res) {
 export async function getCustomerById(req, res) {
   const { id } = req.params;
   try {
-    const customer = await db.query(`SELECT * FROM customers WHERE id=$1;`, [
+    const customer = await db.query(`SELECT customers.*, TO_CHAR(birthday, 'YYYY-MM-DD') as birthday FROM customers WHERE id=$1;`, [
       id,
     ]);
     if(!customer.rowCount) return res.sendStatus(404); //not found
