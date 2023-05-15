@@ -2,13 +2,21 @@ import { db } from "../database/database.connection.js";
 import dayjs from "dayjs";
 
 export async function getRentals(req, res) {
+  let customerId = req.query.customerId;
+  const queryCustomer = customerId ? `"customerId" LIKE ${customerId}` : "";
+  console.log(queryCustomer);
+  let gameId = req.query.gameId;
+  const queryGame = gameId ? `"gameId" LIKE ${gameId}` : "";
+
   try {
     const rentals = await db.query(`
     SELECT customers.name AS "customerName", games.name AS "gameName", rentals.* FROM rentals
       JOIN customers
         ON customers.id=rentals."customerId"
       JOIN games
-        ON games.id=rentals."gameId";`);
+        ON games.id=rentals."gameId"
+        ;`
+        ,[customerId,gameId]); // os dados antigos ainda serão sanitizados. Meio estranho mas faz sentido??
 
     const rentalsObj = rentals.rows.map(
       ({ customerName, gameName, ...rental }) => ({
